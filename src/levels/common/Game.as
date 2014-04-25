@@ -56,7 +56,7 @@ package levels.common
 		protected var _prevDeltaTime:Number;
 		protected var _simTime:Number;
 		
-		private const _maxS:Number = 1 / 15;
+		private const _maxS:Number = 1 / 10;
 		private	const _minS:Number = 1 / 65;
 		
 		protected var _mouseJoint:PivotJoint;
@@ -74,6 +74,10 @@ package levels.common
 		private var _listener2:InteractionListener;
 		private var _listener3:InteractionListener;	
 		private var _escPressed:Boolean;
+		
+		private var _middleClicked:Boolean;
+		
+		protected var _mousePoint:Vec2;
 		
 		protected var _pause:Boolean;
 		
@@ -125,6 +129,8 @@ package levels.common
 			addEventListener(Event.REMOVED, destroy);
 			addEventListener(MouseEvent.MOUSE_DOWN, mouseDownHandler);
 			addEventListener(MouseEvent.MOUSE_UP, mouseUpHandler);
+			addEventListener(MouseEvent.MIDDLE_MOUSE_DOWN, middleClicked);
+			addEventListener(MouseEvent.MIDDLE_MOUSE_UP, middleUnClicked);
 			
 			_prevTime = getTimer();	
 			_prevDeltaTime = 33.0;
@@ -149,7 +155,7 @@ package levels.common
 			_drawDebugData = true;
 			_debugView.drawConstraints = true;
             addChild(_debugView.display);
-		}
+		}		
 		
 		/**
 		 * This function listens to beginnings of interaction between bodies
@@ -325,25 +331,19 @@ package levels.common
 			_deltaTime = (currentTime-_prevTime);
 			_simTime += _deltaTime;
 			
-			//Mouse dragging of physical objects (first anchor)
-			if (_mouseJoint.active)
-			{
-				var xx:Number = _debugView.display.mouseX;
-				var yy:Number = _debugView.display.mouseY;
-				
-				var trMtx1:Matrix = _debugView.transform.toMatrix();
-				
-				var mousePoint:Vec2 = Vec2.get( xx-trMtx1.tx, yy-trMtx1.ty );
-				
-				_mouseJoint.anchor1.setxy(mousePoint.x, mousePoint.y);
-				//trace(xx, yy, mousePoint.x, mousePoint.y);
-			}
+			mouseMovement();
+			
+			mouseDrag();			
 			
 			//Call update of child classes
 			updates();
 			
 			//Nape's debug draw
 			_debugView.clear();
+			
+			if ( _middleClicked )
+				spaceExplosion( 200, _mousePoint, 100000, _space, _debugView );
+			
 			if ( _drawDebugData )
 			{
 				_debugView.draw(_space);
@@ -357,6 +357,137 @@ package levels.common
 			_prevTime = currentTime;
 			//Smoothing of delta between updates for adaptive step
 			_prevDeltaTime = ( _prevDeltaTime - (_prevDeltaTime - _deltaTime) * 0.15 );
+		}
+		
+		/**
+		 * Calculates coordinates of mouse cursor
+		 */
+		private function mouseMovement():void 
+		{
+			var xx:Number = _debugView.display.mouseX;
+			var yy:Number = _debugView.display.mouseY;
+				
+			var trMtx:Matrix = _debugView.transform.toMatrix();
+			
+			if ( !_mousePoint )
+				_mousePoint = Vec2.get( xx - trMtx.tx, yy - trMtx.ty );
+			else
+			{
+				_mousePoint.x = xx - trMtx.tx;
+				_mousePoint.y = yy - trMtx.ty;
+			}
+		}
+		
+		/**
+		 * Mouse dragging of physical objects (first anchor)
+		 */
+		private function mouseDrag():void 
+		{
+			if (_mouseJoint.active)
+			{
+				_mouseJoint.anchor1.setxy(_mousePoint.x, _mousePoint.y);
+				//trace(xx, yy, mousePoint.x, mousePoint.y);
+			}
+		}
+		
+		/**
+		 * Querries space under mousepoint with the circle of some size.
+		 * After finding bodies in this circle, makes boom!
+		 * @param	qSize size of querry circle		
+		 * @param	expCenter center of exp circle
+		 * @param	expStr strength of eplosion
+		 * @param	space game Space
+		 * @param	debug debug view to display explosion circle and marker-circles of bodies inside/intersecting exp. circle		
+		 */
+		private function spaceExplosion(qSize:Number, expCenter:Vec2, expStr:Number, space:Space, debug:Debug):void 
+		{	
+			var intersectingBodies:BodyList
+			var containedBodies:BodyList
+			
+			// Sample all bodies under a center point in a circle			
+			
+            // With intersection only check.
+            intersectingBodies = space.bodiesInCircle(
+                expCenter,
+                /*radius*/ qSize,
+                /*strict-containment*/ false,
+                /*filter*/ null,
+                intersectingBodies
+            );
+			// With strict containment check.
+            containedBodies = space.bodiesInCircle(
+                expCenter,
+                /*radius*/ qSize,
+                /*strict-containment*/ true,
+                /*filter*/ null,
+                containedBodies
+            );
+			
+			//Output querry results	into debug sprite
+			if ( debug )
+			{
+				debug.drawCircle(expCenter, qSize, 0xffff);
+				for ( var i:int = 0; i < intersectingBodies.length; i++) 
+				{
+					debug.drawCircle(intersectingBodies.at(i).position, 10, 0xffff);
+				}
+				for (i = 0; i < containedBodies.length; i++) 
+				{				
+					debug.drawFilledCircle(containedBodies.at(i).position, 5, 0xffff);
+				}
+			}			
+			
+			//Filter out strictly contained bodies from the list of intersecting bodies
+			intersectingBodies.filter( function (l1:Body):Boolean {
+				if ( containedBodies.has(l1) )
+					return false;
+				return true;
+			});			
+			
+			//Boom
+			for ( i = 0; i < intersectingBodies.length; i++) 
+			{
+                var bod:Body = intersectingBodies.at(i);
+				
+				if ( bod.type == BodyType.DYNAMIC )
+				{
+					impulseCircular( bod, expCenter, expStr*0.25 );
+				}
+            }
+			for (i = 0; i < containedBodies.length; i++) 
+			{				
+				bod = containedBodies.at(i);
+				
+				if ( bod.type == BodyType.DYNAMIC )
+				{
+					impulseCircular( bod, expCenter, expStr );
+				}
+            }
+			
+			intersectingBodies.clear();	
+            containedBodies.clear();
+		}
+		
+		/**
+		 * Creates "circular explosion", gives impulse to a body depending on it's angle from center point
+		 * @param	bod - body, it's position in the circle determines direction of impulse
+		 * @param	centerPoint - center of circle
+		 * @param	expStr - strength of the impulse
+		 */
+		private function impulseCircular(bod:Body, centerPoint:Vec2, expStr:Number):void 
+		{
+			var dx:Number = bod.position.x - centerPoint.x;
+			var dy:Number = bod.position.y - centerPoint.y;
+			
+			var dist:Vec2 = Vec2.get( dx, dy );
+			var distLen:Number = dist.length != 0 ? dist.length : 0.0001;
+			
+			var ang:Number = Math.atan2( dx, dy )-Math.PI/2;
+			var angDeg:Number = ang * 180 / Math.PI;
+			
+			bod.applyImpulse( Vec2.weak( expStr * Math.cos(ang) / distLen, -expStr * Math.sin(ang) / distLen ), bod.position );
+			
+			dist.dispose();
 		}
 		
 		/**
@@ -433,6 +564,24 @@ package levels.common
 		public function keyIsPressed( keyCode:uint ):Boolean
 		{
 			return _pressedKeys.indexOf(keyCode) != -1;
+		}		
+		
+		/**
+		 * 
+		 * @param	e
+		 */
+		private function middleUnClicked(e:MouseEvent):void 
+		{
+			_middleClicked = false;
+		}
+		
+		/**
+		 * 
+		 * @param	e
+		 */
+		private function middleClicked(e:MouseEvent):void 
+		{
+			_middleClicked = true;	
 		}
 		
 		/**
@@ -449,17 +598,8 @@ package levels.common
 		 * @param	e
 		 */
 		private function mouseDownHandler(e:MouseEvent):void 
-		{				
-			var xx:Number = e.localX
-			var yy:Number = e.localY
-			
-			var trMtx1:Matrix = _debugView.transform.toMatrix();
-			
-			var mousePoint:Vec2 = Vec2.get( xx-trMtx1.tx, yy-trMtx1.ty );
-			
-			//trace(xx, yy, mousePoint, _actor.getPos(), trMtx1);
-			
-			var bodies:BodyList = _space.bodiesUnderPoint(mousePoint);
+		{
+			var bodies:BodyList = _space.bodiesUnderPoint(_mousePoint);
 			for ( var i:int = 0; i < bodies.length; i++ )
 			{
 				var body:Body = bodies.at(i);
@@ -467,12 +607,12 @@ package levels.common
 					continue;
 					
 				_mouseJoint.body2 = body;
-				_mouseJoint.anchor2.set(body.worldPointToLocal(mousePoint, true));
+				_mouseJoint.anchor2.set(body.worldPointToLocal(_mousePoint, true));
 				_mouseJoint.active = true;
 				
 				break;
 			}
-			mousePoint.dispose();
+			
 		}
 		
 		/**
@@ -490,7 +630,9 @@ package levels.common
 			removeEventListener(Event.ENTER_FRAME, update);
 			removeEventListener(Event.REMOVED, destroy);
 			removeEventListener(MouseEvent.MOUSE_DOWN, mouseDownHandler);
-			removeEventListener(MouseEvent.MOUSE_UP, mouseUpHandler);
+			removeEventListener(MouseEvent.MOUSE_UP, mouseUpHandler);			
+			removeEventListener(MouseEvent.MIDDLE_MOUSE_DOWN, middleClicked);
+			removeEventListener(MouseEvent.MIDDLE_MOUSE_UP, middleUnClicked);
 		}
 		
 	}

@@ -18,6 +18,7 @@ package  windows
 	import flash.events.MouseEvent;
 	import levels.Level1;
 	import levels.Level2;
+	import levels.Level3;
 	/**
 	 * ...
 	 * @author Hammerzeit
@@ -56,7 +57,7 @@ package  windows
 					(parent as Main).Add(new Level2());
 					break;
 				case "lvl_2":
-					
+					(parent as Main).Add(new Level3());
 					break;
 				case "lvl_3":
 					
