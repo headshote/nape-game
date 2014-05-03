@@ -1,21 +1,7 @@
 package  windows
 {
-	import examples.BasicSimulation;
-	import examples.BodyFromGraphic;
-	import examples.Constraints;
-	import examples.DestructibleTerrain;
-	import examples.FilteringInteractions;
-	import examples.FixedDragging;
-	import examples.MarioGalaxyGravity;
-	import examples.OneWayPlatforms;
-	import examples.PerlinSquares;
-	import examples.Portals;
-	import examples.PyramidStressTest;
-	import examples.SoftBodies;
-	import examples.SpatialQueries;
-	import examples.Viewports;
-	import flash.events.Event;
-	import flash.events.MouseEvent;
+	import examples.*;
+	import flash.events.*;
 	/**
 	 * ...
 	 * @author Hammerzeit

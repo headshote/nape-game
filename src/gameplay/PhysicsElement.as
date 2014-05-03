@@ -1,20 +1,12 @@
 package gameplay 
 {
-	import flash.display.DisplayObject;
 	import flash.display.DisplayObjectContainer;
-	import flash.display.TriangleCulling;
 	import flash.geom.Matrix;
-	import nape.geom.Mat23;
-	import nape.geom.Vec2;
-	import nape.phys.Body;
-	import nape.phys.BodyType;
-	import nape.phys.Material;
-	import nape.shape.Circle;
-	import nape.shape.Polygon;
-	import nape.shape.Shape;
-	import nape.space.Space;
-	import utils.Interactions;
-	import utils.Parser;
+	import nape.geom.*;
+	import nape.phys.*;
+	import nape.shape.*;
+	import nape.space.*;
+	import utils.*;
 	/**
 	 * Physical element, that is created according to it's type, has body, and different attributes
 	 * @author Hammerzeit

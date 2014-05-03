@@ -1,11 +1,10 @@
 package 
 {
-	import com.junkbyte.console.Cc;
-	import flash.display.DisplayObject;
-	import flash.display.Sprite;
-	import flash.events.Event;
-	import windows.Menu;
-	import windows.OverLay;
+	import com.junkbyte.console.*;
+	import flash.display.*;
+	import flash.events.*;
+	import utils.*;
+	import windows.*;
 	
 	/**
 	 * ...
@@ -27,9 +26,27 @@ package
 			
 			// entry point
 			Cc.startOnStage(this, "`");
+			Cc.addSlashCommand("scale", setGameScale);
+			Cc.addSlashCommand("exprad", setExplosionRadius);
+			Cc.addSlashCommand("expstr", setExplosionStrength);
 			
 			_overlay = new OverLay();
 			Add( new Menu(), _overlay );
+		}
+		
+		private function setExplosionStrength(str:Number):void 
+		{
+			GameNumbers.expStrength = str;
+		}
+		
+		private function setExplosionRadius(rad:Number):void 
+		{
+			GameNumbers.expRadius = rad;
+		}
+		
+		private function setGameScale(scale:Number):void 
+		{
+			GameNumbers.currentScale = scale;
 		}
 		
 		public function Add(...args):void

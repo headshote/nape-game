@@ -1,17 +1,12 @@
 package gameplay 
 {
-	import flash.display.DisplayObject;
-	import flash.display.DisplayObjectContainer;
-	import flash.ui.Keyboard;
-	import flash.utils.getQualifiedClassName;
-	import levels.common.Game;
-	import nape.constraint.DistanceJoint;
-	import nape.constraint.LineJoint;
-	import nape.geom.Vec2;
-	import nape.phys.Body;
-	import nape.shape.Circle;
-	import nape.space.Space;
-	import utils.Parser;
+	import flash.display.*;
+	import flash.ui.*;
+	import levels.common.*;
+	import nape.constraint.*;
+	import nape.geom.*;
+	import nape.space.*;
+	import utils.*;
 	
 	/**
 	 * Actor class - contains vehicle with shock absorbers
@@ -126,8 +121,8 @@ package gameplay
 		}	
 		
 		/**
-		 * Attaches wheelt to hull, with two joints - lineJoint, non-stiff, moves over the line in set direction;
-		 * distanceJoint - stiff - acts like sprint, trying to brint back the translated linejoint into it's max
+		 * Attaches wheel to hull, with two joints - lineJoint, stiff, moves over the line in set direction;
+		 * distanceJoint - NOT stiff - acts like spring, trying to bring back the translated linejoint into it's max
 		 * position, after it has been 'squeezed' by some force
 		 */
 		protected function linkCarToWheels():void
@@ -155,7 +150,7 @@ package gameplay
 				var l:Number = m / tangA;
 				
 				//Both joints allow their connected bodies to rotate
-				//Line joint, where second body moves on a line defined by point anchor1 and directional vector, is NOT stiff
+				//Line joint, where second body moves on a line defined by point anchor1 and directional vector, is stiff
 				_lineJoints.push( new LineJoint(_hull.body, _wheels[i].body, 
 											new Vec2(_hull.body.worldPointToLocal(_wheels[i].body.position).x, distanceChassisPivot), new Vec2(0, 0), 
 											new Vec2(l, m), distanceChassisPivot, distanceChassisPivot + heightDamper) );
@@ -163,7 +158,7 @@ package gameplay
 				_lineJoints[_lineJoints.length-1].stiff = true;
 				_lineJoints[_lineJoints.length - 1].space = _space;
 				
-				//Distance joint - spring, that returns to it's orig. position after squeezing, is stiff
+				//Distance joint - spring, that returns to it's orig. position after squeezing, is NOT stiff
 				_distanceJoints.push( new DistanceJoint(_hull.body, _wheels[i].body, 
 												new Vec2(_hull.body.worldPointToLocal(_wheels[i].body.position).x, distanceChassisPivot), new Vec2(0, 0),
 												distanceChassisPivot + heightDamper, distanceChassisPivot + constraintDamper) );

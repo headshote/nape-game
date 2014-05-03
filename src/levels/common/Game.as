@@ -1,42 +1,18 @@
 package levels.common 
 {
-	import flash.display.DisplayObject;
-	import flash.display.DisplayObjectContainer;
-	import flash.display.NativeMenuItem;
-	import flash.display.Sprite;
-	import flash.events.Event;
-	import flash.events.KeyboardEvent;
-	import flash.events.MouseEvent;
-	import flash.geom.Matrix;
-	import flash.geom.Point;
-	import flash.geom.Rectangle;
-	import flash.ui.Keyboard;
-	import flash.utils.getQualifiedClassName;
-	import flash.utils.getTimer;
-	import gameplay.Actor;
-	import gameplay.PhysicsElement;
-	import nape.callbacks.CbEvent;
-	import nape.callbacks.CbType;
-	import nape.callbacks.InteractionCallback;
-	import nape.callbacks.InteractionListener;
-	import nape.callbacks.InteractionType;
-	import nape.constraint.MotorJoint;
-	import nape.constraint.PivotJoint;
-	import nape.geom.Mat23;
-	import nape.geom.Vec2;
-	import nape.geom.Vec3;
-	import nape.phys.Body;
-	import nape.phys.BodyList;
-	import nape.phys.BodyType;
-	import nape.phys.Interactor;
-	import nape.shape.Circle;
-	import nape.shape.Polygon;
-	import nape.shape.Shape;
-	import nape.space.Space;
-	import nape.util.BitmapDebug;
-	import nape.util.Debug;
-	import utils.Parser;
-	import windows.Levels;
+	import flash.display.*;
+	import flash.events.*;
+	import flash.geom.*;
+	import flash.ui.*;
+	import flash.utils.*;
+	import gameplay.*;
+	import nape.callbacks.*;
+	import nape.constraint.*;
+	import nape.geom.*;
+	import nape.phys.*;
+	import nape.space.*;
+	import nape.util.*;
+	import utils.*;
 	
 	/**
 	 * Base class for game levels.
@@ -104,6 +80,8 @@ package levels.common
 			
 			stage.focus = this;
 			
+			_mousePoint = Vec2.get(0, 0);
+			
 			//Camera
 			_camera = new Sprite();
 			_camera.graphics.beginFill(0x00ff00, 0.25);
@@ -114,7 +92,7 @@ package levels.common
 			_camera.visible = false;
 			_camW = bRect.width;
 			_camH = bRect.height;
-			this.addChild(_camera);
+			addChild(_camera);
 		
 			_space = new Space(_gravity);
 			
@@ -138,11 +116,11 @@ package levels.common
 			
 			//Add listeners to interaction between bodies of any types for collisions for events end, ongoing, begin
 			_listener1 = new InteractionListener( CbEvent.BEGIN, InteractionType.COLLISION, [CbType.ANY_BODY],
-												[CbType.ANY_BODY], beginHandler, 1 );
+												[CbType.ANY_BODY], Interactions.instance.beginHandler, 1 );
 			_listener2 = new InteractionListener( CbEvent.ONGOING, InteractionType.COLLISION, [CbType.ANY_BODY],
-												[CbType.ANY_BODY], ongoingHandler, 0 );
+												[CbType.ANY_BODY], Interactions.instance.ongoingHandler, 0 );
 			_listener3 = new InteractionListener( CbEvent.END, InteractionType.COLLISION, [CbType.ANY_BODY],
-												[CbType.ANY_BODY], endHandler, 2 );
+												[CbType.ANY_BODY], Interactions.instance.endHandler, 2 );
 			
 			_space.listeners.add(_listener1);
 			_space.listeners.add(_listener2);
@@ -155,76 +133,22 @@ package levels.common
 			_drawDebugData = true;
 			_debugView.drawConstraints = true;
             addChild(_debugView.display);
+		}	
+		
+		/**
+		 * This one should be overridden, pregame initializations
+		 */
+		protected function init():void 
+		{}
+		
+		/**
+		 * Call this to restart the game
+		 */
+		public function restart():void
+		{
+			destroy(null);
+			start();
 		}		
-		
-		/**
-		 * This function listens to beginnings of interaction between bodies
-		 * @param	cb
-		 */
-		protected function beginHandler(cb:InteractionCallback):void 
-		{
-			var firstObject:Interactor = cb.int1;
-			var secondObject:Interactor = cb.int2;		
-			
-			var dataA:* = firstObject.userData;
-			var dataB:* = secondObject.userData;
-			
-			if ( dataA &&  dataA.hasOwnProperty("type") )
-				var stat:* = dataA.type == "actor" ? dataA : null;
-			if ( dataB &&  dataB.hasOwnProperty("type") )
-				stat = dataB.type == "actor" ? dataB : stat;
-				
-			if (stat)
-			{
-				stat["inAir"] = false;
-			}
-		}
-		
-		/**
-		 * This function listens to interactions while they are in progress
-		 * @param	cb
-		 */
-		protected function ongoingHandler(cb:InteractionCallback):void 
-		{
-			var firstObject:Interactor = cb.int1;
-			var secondObject:Interactor = cb.int2;
-			
-			var dataA:* = firstObject.userData;
-			var dataB:* = secondObject.userData;
-			
-			if ( dataA &&  dataA.hasOwnProperty("type") )
-				var stat:* = dataA.type == "actor" ? dataA : null;
-			if ( dataB &&  dataB.hasOwnProperty("type") )
-				stat = dataB.type == "actor" ? dataB : stat;
-				
-			if (stat)
-			{
-				stat["inAir"] = false;
-			}
-		}
-		
-		/**
-		 * This function listens to end of interactions between bodies
-		 * @param	cb
-		 */
-		protected function endHandler(cb:InteractionCallback):void 
-		{
-			var firstObject:Interactor = cb.int1;
-			var secondObject:Interactor = cb.int2;	
-			
-			var dataA:* = firstObject.userData;
-			var dataB:* = secondObject.userData;
-			
-			if ( dataA  )
-				var stat:* = dataA.type == "actor" ? dataA : null;
-			if ( dataB  )
-				stat = dataB.type == "actor" ? dataB : stat;
-			
-			if (stat)
-			{
-				stat["inAir"] = true;
-			}
-		}
 		
 		/**
 		 * This one is used to read level data from some diplay obj. container
@@ -296,7 +220,7 @@ package levels.common
 					joint.space = _space;
 					if ( mRate )
 					{
-						mJoint = new MotorJoint( blist.at(0), _space.world, mRate, 1);
+						mJoint = new MotorJoint( blist.at(0), _space.world, mRate, 1 );
 						mJoint.space = _space;
 					}
 				}	
@@ -305,12 +229,6 @@ package levels.common
 				joints[i].dispose();
 			}
 		}
-		
-		/**
-		 * This one should be overridden, pregame initializations
-		 */
-		protected function init():void 
-		{}
 		
 		/**
 		 * Every frame stuff
@@ -342,7 +260,7 @@ package levels.common
 			_debugView.clear();
 			
 			if ( _middleClicked )
-				spaceExplosion( 200, _mousePoint, 100000, _space, _debugView );
+				spaceExplosion( GameNumbers.expRadius, _mousePoint, GameNumbers.expStrength, _space, _debugView );
 			
 			if ( _drawDebugData )
 			{
@@ -360,22 +278,24 @@ package levels.common
 		}
 		
 		/**
+		 * This one should be overridden, contains custom everyframe updates
+		 */
+		protected function updates():void 
+		{}
+		
+		/**
 		 * Calculates coordinates of mouse cursor
 		 */
 		private function mouseMovement():void 
 		{
 			var xx:Number = _debugView.display.mouseX;
 			var yy:Number = _debugView.display.mouseY;
-				
-			var trMtx:Matrix = _debugView.transform.toMatrix();
 			
-			if ( !_mousePoint )
-				_mousePoint = Vec2.get( xx - trMtx.tx, yy - trMtx.ty );
-			else
-			{
-				_mousePoint.x = xx - trMtx.tx;
-				_mousePoint.y = yy - trMtx.ty;
-			}
+			var trMtx:Mat23;			
+			
+			trMtx = _debugView.transform.inverse();
+			_mousePoint.dispose();
+			_mousePoint = trMtx.transform( Vec2.weak(xx, yy) );			
 		}
 		
 		/**
@@ -386,7 +306,6 @@ package levels.common
 			if (_mouseJoint.active)
 			{
 				_mouseJoint.anchor1.setxy(_mousePoint.x, _mousePoint.y);
-				//trace(xx, yy, mousePoint.x, mousePoint.y);
 			}
 		}
 		
@@ -486,6 +405,7 @@ package levels.common
 			var angDeg:Number = ang * 180 / Math.PI;
 			
 			bod.applyImpulse( Vec2.weak( expStr * Math.cos(ang) / distLen, -expStr * Math.sin(ang) / distLen ), bod.position );
+			bod.applyAngularImpulse( expStr * Math.cos(ang) / distLen );
 			
 			dist.dispose();
 		}
@@ -503,11 +423,13 @@ package levels.common
 			var yDiff:Number = ( _camera.y - y );
 			_camera.x = _camera.x - xDiff * 0.25;
 			_camera.y = _camera.y - yDiff * 0.25;
+			_camera.scaleX = scale;
+			_camera.scaleY = scale;
 			
 			var h:Number = _camH * _camera.scaleY;
 			var w:Number = _camW * _camera.scaleX;
 			
-			var matrix:Matrix = _camera.transform.matrix.clone();
+			var matrix:Matrix = _camera.transform.matrix.clone();			
 			matrix.invert();			
 			matrix.translate( w / 2, h / 2 );
 			
@@ -516,12 +438,6 @@ package levels.common
 			var mtx23:Mat23 = Mat23.fromMatrix(matrix);
 			_debugView.transform = mtx23;
 		}
-		
-		/**
-		 * This one should be overridden, contains custom everyframe updates
-		 */
-		protected function updates():void 
-		{}
 		
 		/**
 		 * Callback for event when key is released
@@ -555,7 +471,7 @@ package levels.common
 			{
 				_pause = !_pause;
 				_escPressed = true;
-			}
+			}			
 		}
 		
 		/**
@@ -622,13 +538,18 @@ package levels.common
 		 */
 		private function destroy(e:Event):void 
 		{
+			removeEventListener(Event.REMOVED, destroy);
+			
 			_space.clear();
-			_debugView.clear();
+			removeChild(_camera);
+			removeChild(_debugView.display);
+			
+			_debugView.clear();			
 			Debug.clearObjectPools();
+			
 			stage.removeEventListener(KeyboardEvent.KEY_DOWN, keyPressed);
 			stage.removeEventListener(KeyboardEvent.KEY_UP, keyReleased);
-			removeEventListener(Event.ENTER_FRAME, update);
-			removeEventListener(Event.REMOVED, destroy);
+			removeEventListener(Event.ENTER_FRAME, update);			
 			removeEventListener(MouseEvent.MOUSE_DOWN, mouseDownHandler);
 			removeEventListener(MouseEvent.MOUSE_UP, mouseUpHandler);			
 			removeEventListener(MouseEvent.MIDDLE_MOUSE_DOWN, middleClicked);

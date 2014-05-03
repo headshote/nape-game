@@ -1,8 +1,7 @@
 package utils 
 {
-	import nape.callbacks.CbType;
-	import nape.callbacks.InteractionCallback;
-	import nape.phys.Interactor;
+	import nape.callbacks.*;
+	import nape.phys.*;
 	/**
 	 * Interactions manager, contains callback handlers for different collision types
 	 * @author Hammerzeit
@@ -34,8 +33,13 @@ package utils
 				CBTYPE_DYNAMIC_CIRCLE = new CbType();
 				CBTYPE_STATIC_CIRCLE = new CbType();
 			} 
-		}       
-	   
+		} 
+		
+		/**
+		 * Use this function to listen to beginnings of interaction between bodies.
+		 * Listens to interaction between  bodies and sets their userdata according to state of the interaction.
+		 * @param	cb
+		 */
 		public function beginHandler(cb:InteractionCallback):void 
 		{
 			var firstObject:Interactor = cb.int1;
@@ -45,9 +49,9 @@ package utils
 			var dataB:* = secondObject.userData;
 			
 			if ( dataA &&  dataA.hasOwnProperty("type") )
-				var stat:* = dataA.type == "dynamic" ? dataA : null;
+				var stat:* = (dataA.type == "dynamic" || dataA.type == "actor") ? dataA : null;
 			if ( dataB &&  dataB.hasOwnProperty("type") )
-				stat = dataB.type == "dynamic" ? dataB : stat;
+				stat = (dataB.type == "dynamic" || dataA.type == "actor") ? dataB : stat;
 				
 			if (stat)
 			{
@@ -55,6 +59,11 @@ package utils
 			}
 		}
 		
+		/**
+		 * Use this function to listen to interactions while they are in progress.
+		 * Listens to interaction between  bodies and sets their userdata according to state of the interaction.
+		 * @param	cb
+		 */
 		public function ongoingHandler(cb:InteractionCallback):void 
 		{
 			var firstObject:Interactor = cb.int1;
@@ -64,9 +73,9 @@ package utils
 			var dataB:* = secondObject.userData;
 			
 			if ( dataA &&  dataA.hasOwnProperty("type") )
-				var stat:* = dataA.type == "dynamic" ? dataA : null;
+				var stat:* = (dataA.type == "dynamic" || dataA.type == "actor") ? dataA : null;
 			if ( dataB &&  dataB.hasOwnProperty("type") )
-				stat = dataB.type == "dynamic" ? dataB : stat;
+				stat = (dataB.type == "dynamic" || dataA.type == "actor") ? dataB : stat;
 				
 			if (stat)
 			{
@@ -74,6 +83,11 @@ package utils
 			}
 		}
 		
+		/**
+		 * Use this function to listen to end of interactions between bodies.
+		 * Listens to interaction between  bodies and sets their userdata according to state of the interaction.
+		 * @param	cb
+		 */
 		public function endHandler(cb:InteractionCallback):void 
 		{
 			var firstObject:Interactor = cb.int1;
@@ -83,9 +97,9 @@ package utils
 			var dataB:* = secondObject.userData;
 			
 			if ( dataA  )
-				var stat:* = dataA.type == "dynamic" ? dataA : null;
+				var stat:* = (dataA.type == "dynamic" || dataA.type == "actor") ? dataA : null;
 			if ( dataB  )
-				stat = dataB.type == "dynamic" ? dataB : stat;
+				stat = (dataB.type == "dynamic" || dataA.type == "actor") ? dataB : stat;
 			
 			if (stat)
 			{

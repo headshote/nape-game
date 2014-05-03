@@ -1,7 +1,6 @@
 package  windows
 {
-	import flash.events.Event;
-	import flash.events.MouseEvent;
+	import flash.events.*;
 	/**
 	 * ...
 	 * @author Hammerzeit

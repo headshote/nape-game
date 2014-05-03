@@ -1,24 +1,7 @@
 package  windows
 {
-	import examples.BasicSimulation;
-	import examples.BodyFromGraphic;
-	import examples.Constraints;
-	import examples.DestructibleTerrain;
-	import examples.FilteringInteractions;
-	import examples.FixedDragging;
-	import examples.MarioGalaxyGravity;
-	import examples.OneWayPlatforms;
-	import examples.PerlinSquares;
-	import examples.Portals;
-	import examples.PyramidStressTest;
-	import examples.SoftBodies;
-	import examples.SpatialQueries;
-	import examples.Viewports;
-	import flash.events.Event;
-	import flash.events.MouseEvent;
-	import levels.Level1;
-	import levels.Level2;
-	import levels.Level3;
+	import flash.events.*;
+	import levels.*;
 	/**
 	 * ...
 	 * @author Hammerzeit
@@ -60,13 +43,13 @@ package  windows
 					(parent as Main).Add(new Level3());
 					break;
 				case "lvl_3":
-					
+					(parent as Main).Add(new Level4());
 					break;
 				case "lvl_4":
-					
+					(parent as Main).Add(new Level5());
 					break;
 				case "lvl_5":
-					
+					(parent as Main).Add(new Level6());
 					break;
 				case "lvl_6":
 					

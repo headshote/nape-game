@@ -1,7 +1,7 @@
 package utils 
 {
-	import flash.display.DisplayObject;
-	import flash.utils.getQualifiedClassName;
+	import flash.display.*;
+	import flash.utils.*;
 	/**
 	 * Parses some display object's class names, instance names, etc., gives useful info based on that
 	 * @author Hammerzeit
