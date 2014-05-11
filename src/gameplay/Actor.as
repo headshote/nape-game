@@ -128,7 +128,7 @@ package gameplay
 		protected function linkCarToWheels():void
 		{			
 			heightDamper = 20;
-			constraintDamper = heightDamper + 5;
+			constraintDamper = heightDamper + 25;
 			
 			var hullBottom:Number = _hull.body.position.y + _hull.height / 2;			
 			
@@ -152,15 +152,15 @@ package gameplay
 				//Both joints allow their connected bodies to rotate
 				//Line joint, where second body moves on a line defined by point anchor1 and directional vector, is stiff
 				_lineJoints.push( new LineJoint(_hull.body, _wheels[i].body, 
-											new Vec2(_hull.body.worldPointToLocal(_wheels[i].body.position).x, distanceChassisPivot), new Vec2(0, 0), 
-											new Vec2(l, m), distanceChassisPivot, distanceChassisPivot + heightDamper) );
+											Vec2.get(_hull.body.worldPointToLocal(_wheels[i].body.position).x, distanceChassisPivot, true), Vec2.get(0, 0, true), 
+											Vec2.get(l, m, true), distanceChassisPivot, distanceChassisPivot + heightDamper) );
 				_lineJoints[_lineJoints.length-1].ignore = true;
 				_lineJoints[_lineJoints.length-1].stiff = true;
 				_lineJoints[_lineJoints.length - 1].space = _space;
 				
 				//Distance joint - spring, that returns to it's orig. position after squeezing, is NOT stiff
 				_distanceJoints.push( new DistanceJoint(_hull.body, _wheels[i].body, 
-												new Vec2(_hull.body.worldPointToLocal(_wheels[i].body.position).x, distanceChassisPivot), new Vec2(0, 0),
+												Vec2.get(_hull.body.worldPointToLocal(_wheels[i].body.position).x, distanceChassisPivot, true), Vec2.get(0, 0, true),
 												distanceChassisPivot + heightDamper, distanceChassisPivot + constraintDamper) );
 				_distanceJoints[_distanceJoints.length-1].stiff = false;
 				_distanceJoints[_distanceJoints.length-1].frequency = frequency;
@@ -208,7 +208,7 @@ package gameplay
 		}
 		
 		/**
-		 * Return true if car isn't standing on solid surface
+		 * Returns true if car isn't standing on solid surface
 		 * @return
 		 */
 		public function inAir():Boolean 
