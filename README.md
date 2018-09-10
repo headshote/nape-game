@@ -13,4 +13,4 @@ Controls: W,A,S,D - movement (acceleration, tilting of car); SPACE - jump; LeftM
 
 Available console (`) commands (press CL link to bring up input field) - /expstr xxx : xxx - number, strength of explosion; /exprad xxx : xxx - number, radius of explosion circle; /scale xxx : xxx - number - scale of viewport.
 
-Try it at http://headshote.byethost16.com/nape-game/
+Try it at https://wordpressaddondev.000webhostapp.com/nape-game/
